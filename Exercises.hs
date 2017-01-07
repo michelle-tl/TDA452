@@ -153,8 +153,88 @@ pascal :: Int -> [Int]
 pascal 0 = [1]
 pascal n = [1] ++ [pascal' n k | k<-[1..n]]
 
-
 pascal' :: Int -> Int -> Int
 pascal' n 0 = 1
 pascal' 0 k = 0
 pascal' n k = pascal' (n-1) (k-1) * n `div` k
+
+-- 4. Erastosthenes' sieve
+
+-- removes all multiples of m from ns without recursion
+crossOut :: Int -> [Int] -> [Int]
+crossOut m ns = [x | x<-ns, x `mod` m /= 0 ]
+
+-- returns a list with prime numbers that are found
+sieve :: [Int] -> [Int]
+sieve [] = []
+sieve (x:xs) = [x]++sieve (filter (\y -> y `mod` x /=0)xs)
+
+-- 5. Number Games
+
+isPrime :: Int -> Bool
+isPrime 0 = False
+isPrime 1 = True
+isPrime n | n > 1 && n<=100 = n `elem` sieve[2..100]
+
+isSumOfTwoPrimes :: Int -> Bool
+isSumOfTwoPrimes 0 = False
+isSumOfTwoPrimes 1 = False
+isSumOfTwoPrimes n = or [ (n - x) `elem` list | x <- list ]
+  where
+      list = sieve[2..(n-1)]
+
+
+-- 6. Occurrences in Lists
+
+-- occursIn x xs, which returns True if x is an element of xs.
+occursIn :: Eq a => a -> [a] -> Bool
+occursIn x xs = x `elem` xs
+
+-- allOccurIn xs ys, which returns True if all of the elements of xs are also elements of ys.
+allOccurIn :: Eq a => [a] -> [a] -> Bool
+allOccurIn xs ys = and [x `elem` ys | x<-xs]
+
+-- sameElements xs ys, which returns True if xs and ys have exactly the same elements.
+sameElements :: Eq a => [a] -> [a] -> Bool
+sameElements xs ys = length xs == length ys && allOccurIn xs ys
+
+-- numOccurrences x xs, which returns the number of times x occurs in xs.
+numOccurences :: Eq a => a -> [a] -> Int
+numOccurences x xs = sum [if x == y then 1 else 0 | y <- xs ]
+
+-- convert a list into a bag
+bag :: Eq a => [a] -> [(a, Int)]
+bag xs = [ (x, numOccurences x xs)| x<-nub xs]
+
+
+-- 7 Elements and Positions
+--
+-- Elements which occur in lists do so at a particular position. For example, 'l' occurs in "hello" at positions 3 and 4. Define functions
+-- positions xs, which converts a list into a list of pairs of elements and their positions. Hint: Make use of the standard function zip.
+
+-- firstPosition x xs, which returns the first position at which x occurs in xs.
+firstPosition :: Eq a => a -> [a] -> Int
+firstPosition x (y:xs) | x==y = 1
+                       | x `elem` xs = 1 + firstPosition x xs
+                       | otherwise = -1
+
+-- remove1 x xs, which removes the first occurrence of x from xs. For example, remove1 'l' "hello" == "helo"
+remove1 :: Eq a => a -> [a] -> [a]
+remove1 x xs = remove1' (firstPosition x xs) xs
+  where
+    remove1' 0 xs = xs
+    remove1' 1 (x:xs) = xs
+    remove1' n (x:xs) = x : remove1' (n-1) xs
+
+
+-- remove n x xs, which removes the first n occurrences of x from xs.
+-- remove ::
+
+
+-- 8 (*). More List Comprehensions
+--
+-- Experiment with the function
+-- pairs :: [a] -> [b] -> [(a,b)]
+-- pairs xs ys = [(x,y) | x<-xs, y<-ys]
+-- and see what it does.
+-- A Pythagorean triad is a triple of integers (a,b,c) such that a2 + b2 = c2. Find all Pythagorean triads with a≤b≤c≤100.
