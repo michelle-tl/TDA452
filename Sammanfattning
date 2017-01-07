@@ -1,0 +1,276 @@
+------------- Lecture 1A -------------
+
+
+
+#Tuples
+
+  examplePair :: (Double, Bool)
+  examplePair = (3.14, False)
+
+  exampleTriple :: (Bool, Int, String)
+  exampleTriple = (False, 42, "Answer")
+
+  exampleFunction :: (Bool, Int, string) -> Bool
+  exampleFunction (b, i, s) = not b && length s<i
+
+#Lists
+
+    * For any tpe x, [x] is the type of lists of x's
+      e.g [Bool] is the type of lists of Bool
+
+    * [] empty list (nil)
+
+    * x:xs, x has type A and xs has type [A].
+      x = the head
+      : cons
+      xs = the tail
+
+
+    List shorthands
+    * 1:(2:(3:[])) == 1:2:3:[], [1,2,3], [1..3]
+
+    Functions over lists
+    * can use pattern matching
+
+    * summerize :: [String] -> String
+      summerize [] = "None"
+      summerize [x] = "Only " ++ x
+      summerize _ = "Several things." (don't care pattern)
+
+    * primitive recursion is most used
+      doubles :: [Integer] -> [Integer]
+      doubles [] = []]
+      doubles (x:xs)
+
+    * map applying f to each element
+      map f [x1, x2, xn] = [f x1, f x2, f xn]
+      map f[] = []
+      map f(x:xs) = fx : map f xs
+
+    * filter - removing all elements that don't have a certain property
+
+    * List comprehensions
+      [2*n | n<- [10..12]]
+
+
+
+------------- Lecture 1B -------------
+
+
+
+
+#Modelling Data
+
+  data Suit = Spades | Hearts | Diamonds | Clubs
+  deriving Show
+  - needs in order to print the values
+
+  colour :: Suit -> Colour
+  colour Spades = Black
+  colour Hearts = Red
+  colour Diamonds = Red
+  colour Clubs = Black
+
+
+#Property
+  prop_rankBeats a b = rankBeats a b || rankBeats b a
+
+  quickCheck can't be used since it doesn't know how to use arbitrary Rank
+
+  We have to change it to:
+  data Rank = Numeric Integer | Jack | Queen | King | Ace
+  deriving (Show,Eq)
+    define show and == for rank
+
+  prop_ranksBeats a b = a/=b ==> rankBeats a b || rankBeats b a
+
+# QuickCheck Generators
+  test data is chosen by a test data generator
+
+#Modelling Card
+
+  data Card = Card Rank Suit
+    deriving Show
+
+  rank :: Card -> Rank
+  rank (Card r s) = r
+
+  suit :: Card -> Suit
+  suit (Card r s) = s
+
+  * data Card = Card{rank :: Rank, suit :: Suit}
+    deriving Show
+
+#Modelling a Hand of Cards
+
+  data Hand = Empty | Add Card Hand
+    deriving Show
+
+
+
+------------- Lecture 2A -------------
+
+
+
+#Define lists as a datatype
+    * data List a = Empty | Add a (List a)
+
+    * (++) :: [a] -> [a] -> [a]
+
+    * Example Quicksort
+      qsort :: Ord a => [a] -> [a]
+      qsort [] = []
+      qsort(x1:xs) = qsort smaller ++ [x1] ++ qsort greater
+        where
+          smaller = [x | x<-x1, x<x1]
+          greater = [y | y<-x1, y>x1]
+
+      Ord a means sort lists of any type a, as long as a has comparison functions
+
+#Do's and don'ts
+  isBig :: Integer -> Bool
+  isBig n | n > 999 = True
+          | otherwise = False
+          guards and boolean results, instead
+          n>999
+
+  resultIsSmall :: Integer -> Bool
+  resultIsSmall n = isSmall (f n) == True
+  resultIsSmall n = isSmall (f n)
+
+
+
+------------- Lecture 2B -------------
+
+
+
+# What is a higher order function?
+  a function which takes another function as a parameter
+
+  even :: Int -> Bool
+  even n = n `mod` 2 ==0
+
+  filter :: (Int -> Bool) -> [Int] -> [Int]
+
+#Curried functions
+    Int -> Int -> Int (two ints return an int)
+    a function that takes multiple arguments into sequence of functions, each with a single argument
+
+#Partially applied
+  a function that takes as many parameters as we left out
+
+
+  * Case Study: Summing a List
+    sum[] = 0
+    sum(x:xs) = x + sum xs
+
+
+    foldr op z []= z
+    foldr op z (x:xs) = x `op` foldr op z xs
+
+
+    sum xs = foldr plus 0 xs
+       where plus x y = x + y
+
+    sum xs = foldr(+) 0 xs
+
+# λ-expressions
+  inline expression
+
+    reverse xs = foldr snoc[] xs
+    where snoc y ys = ys ++ [y]
+
+    instead:
+    reverse xs = foldr(\y ys -> ys++[y]) [] xs
+
+    example
+    unlines["abc", "def", "ghi"] = "abc\ndef\nghi\n"
+
+    unlines[xs, ys, zs] = xs ++ "\n"++ (ys ++ "\n" ++ (zs ++ "\n" ++ []))
+
+    unlines xss = foldr(λ xs ys -> xs ++ "\n" ++ ys)[] xss
+    same as (xss defines two lists)
+    unlines xss = foldr join [] xss
+      where join xs ys = xs ++ "\n" ++ ys
+
+#Sections
+    map(+1)[1,2,3]=[2,3,4]
+    (a•)b = a•b
+    (•a)b = b•a
+
+#Function composition
+
+  (f . g) x = f(g x)
+
+
+
+------------- Lecture 3A -------------
+
+#Pure functions
+  * no side effects
+  * same argument => same results
+  * IO actions
+
+  getTheDifference :: IO Integer
+  getTheDifference = do x <- readLn
+                        y <- readLn
+                        return (x-y)
+
+  showTheDifference :: IO ()
+  showTheDifference = do d <- getTheDifference
+                          putStr "The difference is: "
+                          print d
+
+
+
+------------- Lecture 3B -------------
+
+#Type classes and instances
+
+  * type class - declares a set of methods
+    class Num a where (+), (*), (-) :: a -> a -> a
+    negate, abs, signum :: a -> a
+    fromInteger :: Integer -> a
+
+  * instance declaration - provides implementations of methods for a specific type
+    instance Eq TrafficLight where
+    Red    == Red    = True
+    Yellow == Yellow = True
+    Green  == Green  = True
+    _      == _      = False
+
+  * instance (Eq a, Eq b) => Eq (a,b) where (x1, y1) == (x2, y2) = x1 == x2 && y1 == y2
+    instance Eq a => Eq [a] where
+      [] == [] = True
+      x:xs == y:ys x==y && xs == ys
+      _ == _ = False
+------------- Lecture 4A -------------
+
+  * Enum class
+    enumeration
+
+  * Bounded class
+    Bool, Char, Int, Tuples
+
+  * data Rank = Numeric Int | Jack | Queen | King | Ace
+            deriving (Eq,Ord)
+
+    instance Show Rank where
+      show (Numeric n) = show n
+      show Jack        = "J"
+      show Queen       = "Q"
+      show King        = "K"
+      show Ace         = "A"
+
+
+  # Monomorphism restriction
+
+------------- Lecture 4B -------------
+
+------------- Lecture 5A -------------
+
+------------- Lecture 5B -------------
+
+------------- Lecture 6A -------------
+
+------------- Lecture 6B -------------
