@@ -146,9 +146,13 @@ prop_duplicatesRemoved xs = not (duplicates (removeDuplicates xs))
 
 
 -- 3. Pascal's Triangle
+
+-- computing the nth row in a pascal triangle by recursively calling pascal'
+-- pascal' computes "n choose k" where k starts from 1 to n
 pascal :: Int -> [Int]
 pascal 0 = [1]
 pascal n = [1] ++ [pascal' n k | k<-[1..n]]
+
 
 pascal' :: Int -> Int -> Int
 pascal' n 0 = 1
