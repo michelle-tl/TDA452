@@ -208,9 +208,12 @@ bag xs = [ (x, numOccurences x xs)| x<-nub xs]
 
 
 -- 7 Elements and Positions
---
--- Elements which occur in lists do so at a particular position. For example, 'l' occurs in "hello" at positions 3 and 4. Define functions
+
 -- positions xs, which converts a list into a list of pairs of elements and their positions. Hint: Make use of the standard function zip.
+positions :: Eq a => [a] -> [(a, Int)]
+positions (xs) = zip xs posList
+  where
+    posList = [1..length xs]
 
 -- firstPosition x xs, which returns the first position at which x occurs in xs.
 firstPosition :: Eq a => a -> [a] -> Int
@@ -226,15 +229,21 @@ remove1 x xs = remove1' (firstPosition x xs) xs
     remove1' 1 (x:xs) = xs
     remove1' n (x:xs) = x : remove1' (n-1) xs
 
-
 -- remove n x xs, which removes the first n occurrences of x from xs.
--- remove ::
+remove :: Eq a => Int -> a -> [a] -> [a]
+remove n x xs | n>0 = remove (n-1) x $ remove1 x xs
+              | otherwise = xs
 
 
 -- 8 (*). More List Comprehensions
---
--- Experiment with the function
--- pairs :: [a] -> [b] -> [(a,b)]
--- pairs xs ys = [(x,y) | x<-xs, y<-ys]
--- and see what it does.
+
+-- returns a list of all combinations of the elements from these two lists
+pairs :: [a] -> [b] -> [(a,b)]
+pairs xs ys = [(x,y) | x<-xs, y<-ys]
+
 -- A Pythagorean triad is a triple of integers (a,b,c) such that a2 + b2 = c2. Find all Pythagorean triads with a≤b≤c≤100.
+pythagoreanTriad :: [(Int,Int,Int)]
+pythagoreanTriad = [(a,b,c) | c <- [1..100],
+                              b <- [1..c],
+                              a <-[1..b],
+                              a^2+b^2==c^2]
