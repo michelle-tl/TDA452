@@ -209,7 +209,19 @@
 #Pure functions
   * no side effects
   * same argument => same results
-  * IO actions
+  * debugging and testing
+
+
+#IO
+  * IO actions is not pure since they can be changed and return different results
+  * interacts with the "outside world"
+
+#Instructions vs Functions
+  * Function /= Instructions
+    Instructions can behave differently on different occasions
+
+#Example to get access to the results from IO-actions
+  * s= readFile "hello.txt" doesn't work -> two equal interchangeable things of same type
 
   getTheDifference :: IO Integer
   getTheDifference = do x <- readLn
@@ -221,14 +233,21 @@
                           putStr "The difference is: "
                           print d
 
+  copyFile :: FilePath -> FilePath -> IO()
+  copyFile from to = do s <- readFile from
+                        writeFile to s
 
+  sortFile :: FilePath -> FilePath -> IO()
+  sortFile from to = do s <- readFile from
+                        writeFile to (sortLines s)
 
+  sortLines = unlines . sort . lines
 ------------- Lecture 3B -------------
 
 #Type classes and instances
 
   * type class - declares a set of methods
-    class Num a where (+), (*), (-) :: a -> a -> a
+    class Num a where (+), (* ), (-) :: a -> a -> a
     negate, abs, signum :: a -> a
     fromInteger :: Integer -> a
 
@@ -239,21 +258,42 @@
     Green  == Green  = True
     _      == _      = False
 
-  * instance (Eq a, Eq b) => Eq (a,b) where (x1, y1) == (x2, y2) = x1 == x2 && y1 == y2
-    instance Eq a => Eq [a] where
+  * Equality instance for pairs
+    instance (Eq a, Eq b) => Eq (a,b) where (x1, y1) == (x2, y2) = x1 == x2 && y1 == y2
+
+  * Equality instance for lists
+      instance Eq a => Eq [a] where
       [] == [] = True
       x:xs == y:ys x==y && xs == ys
       _ == _ = False
-------------- Lecture 4A -------------
 
-  * Enum class
-    enumeration
+  * The Ord class
+    subclass of Eq
+    data Ordering = LT | EQ | GT
+
+  * The Enum class
+    enumerations
 
   * Bounded class
+    enumAll : (Bounded a, Enum a) => [a]
+    enumAll = [minBound..maxBound]
+
     Bool, Char, Int, Tuples
 
-  * data Rank = Numeric Int | Jack | Queen | King | Ace
-            deriving (Eq,Ord)
+  * Show and Read
+
+   * examlpes
+   data Suit = Spades | Hearts | Diamonds | Clubs
+            deriving (Eq,Ord, Show, Read, Enum, Bounded)
+
+    instance Show Suit where
+      show Spades   = "♠"
+      show Hearts   = "♥"
+      show Diamonds = "♦"
+      show Clubs    = "♣"
+
+    data Rank = Numeric Int | Jack | Queen | King | Ace
+            deriving (Eq,Ord, Show, Read, Enum, Bounded)
 
     instance Show Rank where
       show (Numeric n) = show n
@@ -262,8 +302,88 @@
       show King        = "K"
       show Ace         = "A"
 
+    data Card = Card{rank::Rank, suit::Suit}
+
+    instance Show Card where
+      show (Card r s) = show r ++ show s
+
+  * defining own class
+    class Small a where
+      values :: [a]
+
+    instance Small Bool where
+      values = [False, True]
+
+    instance Small Suit where
+      values = [maxBound..minBound]
+
 
   # Monomorphism restriction
+    definitions without arguments and without type signatures are not allowed to be overloaded
+
+------------- Lecture 3B Generators -------------
+
+  * QuickCheck perform random testing with values of any type in class Arbitrary
+   Any type in Arbitrary, random value generator Gen a
+
+  * Gen is a Monad
+
+  * Generating a Rank
+    sample rRank
+    rRank = oneOf [return Jack,
+                   return King,
+                   return Ace,
+                   ....
+                   do r <- choose(2,10) return (Numeric r)]
+
+  * have to make our types instances of this class
+    instance Arbitrary Suit where
+    arbitrary = rSuit
+
+
+#Testing
+  - Generators only produce values satifying the datatype     invariant
+
+  * Test Data Distribution
+    prop_Rank r = collect r(validRank r)
+    - returns a summary, showing how often each value occured
+
+    - rRank = frequence
+                [(1, return Jack), 9,
+                do r<- choose(2,10)..]
+      choose number cards 9x as often
+
+  * Testing insert
+    prop_insert_1 :: Integer -> [Integer] -> Bool
+    prop_insert_1 x xs = isOrdered (insert x xs)
+    --> Bad because if the input list isn't ordered the output list won't be ordered
+
+    property_insert_2 :: Integer -> [Integer] -> Property
+    prop_insert_2 x xs = isOrdered xs ==> isOrdered(insert x xs)
+    --> Bad because the proability that a random list is ordered is very low
+
+    - testing ordered lists
+    orderedList :: Gen [Integer]
+    orderedList =
+                do n <- arbitrary
+                  listFrom n
+                where listFrom n =
+                      frequency [(1, return []),
+                      (5, do i <- arbitrary
+                            ns <- listFrom (n+abs i)
+                            return (n:ns))]
+
+    data OrderedList = Ordered[Integer]
+      deriving Show
+
+    instance Arbitrary OrderedList where
+      arbitrary = do xs <- orderedList
+          return(Ordered xs)
+
+    prop_insert_3 x = forAll orderedList (\xs -> isOrdered(insert x xs))
+
+    prop_insert_4 x (Ordered xs) = isOrdered (insert x xs)
+------------- Lecture 4A -------------
 
 ------------- Lecture 4B -------------
 

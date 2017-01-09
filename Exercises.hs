@@ -247,3 +247,50 @@ pythagoreanTriad = [(a,b,c) | c <- [1..100],
                               b <- [1..c],
                               a <-[1..b],
                               a^2+b^2==c^2]
+
+
+---- Exercises 4 ----
+
+
+-- 0. Basic IO
+
+readWriteInteger :: IO ()
+readWriteInteger = do
+                     putStrLn "Number of integers you want to sum up: "
+                     n <- readLn
+                     l <- loop n []
+                     print $ sum l
+                     where
+                      loop :: Int -> [Int] -> IO [Int]
+                      loop 0 xs = return xs
+                      loop n xs = do
+                                    x <- readLn
+                                    loop (n-1) $ xs ++ [x]
+
+readB :: IO()
+readB = do
+            putStrLn "Please enter the integers you want to sort. Enter 0 when done: "
+            x <- readLn :: IO Int
+            l <- readLoop x []
+            print l
+            where
+              readLoop :: Int -> [Int] -> IO [Int]
+              readLoop 0 xs = return $ sort xs
+              readLoop n xs = do
+                                y <- getLine
+                                let val = read y :: Int
+                                readLoop val (n:xs)
+
+-- 1 (*). Properties of the Look Function
+--
+-- Consider the following standard Haskell function, that looks up an element in a list of pairs (table):
+look :: Eq a => a -> [(a,b)] -> Maybe b
+look x []           = Nothing
+look x ((x',y):xys) | x == x'         = Just y
+                    | otherwise       = look x xys
+-- Define a property prop_LookNothing that expresses that if the look function delivers Nothing, then the thing we were looking for was not in the table.
+
+prop_LookNothing :: Eq a => Eq b => a -> [(a,b)] -> Property
+prop_LookNothing n xs = (look n xs == Nothing) ==> n `notElem` [ a | (a,b) <- xs ] -- && (n `notElem` [snd x|x<-xs])
+
+prop_LookNothing' p xs = look p xs == Nothing ==> not $ p `elem` [ a | (a,b) <- xs ]
